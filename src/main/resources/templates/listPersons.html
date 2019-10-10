@@ -28,9 +28,11 @@
 		No persons yet !  Add one by clicking the 'Add new' button below.
 	</div>
 	
-	<a th:href="@{/person/addNew}">
-		<input type="button" value="Add new"/>
-	</a>
+	<div>
+		<a th:href="@{/person/addNew}">
+			<input type="button" value="Add new"/>
+		</a>
+	</div>
 	
 	<table th:if="${not #lists.isEmpty(persons)}">
 		<tbody>
