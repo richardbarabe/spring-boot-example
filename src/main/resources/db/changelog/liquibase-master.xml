@@ -1,0 +1,21 @@
+<databaseChangeLog 
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+   http://www.liquibase.org/xml/ns/dbchangelog 
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+	
+	<changeSet id="1" author="baraber">
+		<comment>Crée la table de personnes</comment>
+		<createTable tableName="person">
+            <column name="id" autoIncrement="true" type="int">
+            	<constraints nullable="false" primaryKey="true" primaryKeyName="id"/>
+            </column>
+        	<column name="firstname" type="varchar(255)"/>
+        	<column name="lastname" type="varchar(255)"/>
+    	</createTable>
+	</changeSet>
+	
+</databaseChangeLog>

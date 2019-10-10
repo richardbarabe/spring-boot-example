@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<style>
+	.center {
+	  margin: 0;
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+	  -ms-transform: translate(-50%, -50%);
+	  transform: translate(-50%, -50%);
+	}
+	table {
+		border: solid;
+	}
+	tr {
+		border: solid;
+	}
+</style>
+
+<body>
+
+<div  class="center">
+	<span th:if="${successMessage != null}" th:text="${successMessage}"></span>
+	
+	
+	<div th:if="${#lists.isEmpty(persons)}">
+		No persons yet !  Add one by clicking the 'Add new' button below.
+	</div>
+	
+	<a th:href="@{/person/addNew}">
+		<input type="button" value="Add new"/>
+	</a>
+	
+	<table th:if="${not #lists.isEmpty(persons)}">
+		<tbody>
+			<tr th:each="person: ${persons}">
+				<td th:text="${person.firstname}"></td>
+				<td th:text="${person.lastname}"></td>
+				<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>
+					<a th:href="@{/person/edit/{id}(id=${person.id})}" 
+				       th:text="edit"></a>
+				</td>
+				<td>
+					<a th:href="@{/person/delete/{id}(id=${person.id})}" 
+				       th:text="delete"></a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	
+</div>
+</body>
+
+</html>
