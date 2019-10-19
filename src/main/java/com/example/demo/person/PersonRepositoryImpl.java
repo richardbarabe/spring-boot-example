@@ -1,5 +1,6 @@
 package com.example.demo.person;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Repository;
 public class PersonRepositoryImpl implements PersonRepository {
 	
 	private static final String QUERY_FIND_BY_ID = "SELECT * FROM person WHERE id=? limit 1";
+	private static final String QUERY_FIND_ALL = "SELECT * FROM person";
+	private static final String QUERY_UPDATE_BY_ID = "UPDATE person set firstname=?, lastname=? WHERE id=?";
+	private static final String QUERY_DELETE_BY_ID = "DELETE FROM person where id=?";
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -39,7 +43,7 @@ public class PersonRepositoryImpl implements PersonRepository {
 	@Override
 	public void create(Person personToCreate) {
 		Map<String, String> params = Map.of(
-				"firsname", personToCreate.getFirstname(),
+				"firstname", personToCreate.getFirstname(),
 				"lastname", personToCreate.getLastname());
 		
 		Number id = simpleJdbcInsert.executeAndReturnKey(params);
@@ -54,6 +58,25 @@ public class PersonRepositoryImpl implements PersonRepository {
 		} catch(EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
+	}
+
+	@Override
+	public List<Person> findAll() {
+		return jdbcTemplate.query(QUERY_FIND_ALL, rowMapper);
+	}
+
+	@Override
+	public void update(Person person) throws PersonNotFoundException {
+		int nbRowUpdated = jdbcTemplate.update(QUERY_UPDATE_BY_ID, 
+				person.getFirstname(), person.getLastname(), person.getId());
+		if( nbRowUpdated == 0 ) {
+			throw new PersonNotFoundException();
+		}
+	}
+
+	@Override
+	public void delete(long id) {
+		jdbcTemplate.update(QUERY_DELETE_BY_ID, id);
 	}
 
 }
