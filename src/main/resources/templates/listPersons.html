@@ -16,13 +16,16 @@
 	tr {
 		border: solid;
 	}
+	.error {
+		color: red;
+	}
 </style>
 
 <body>
 
 <div  class="center">
 	<span th:if="${successMessage != null}" th:text="${successMessage}"></span>
-	
+	<span class="error" th:if="${errorMessage != null}" th:text="${errorMessage}"></span>
 	
 	<div th:if="${#lists.isEmpty(persons)}">
 		No persons yet !  Add one by clicking the 'Add new' button below.

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.demo.person.Person;
+import com.example.demo.person.PersonNotFoundException;
 
 /**
  * Controls pages related to persons, including showing a list, editing, adding and deleting persons.
@@ -25,6 +27,7 @@ import com.example.demo.person.Person;
 @Controller
 public class PersonController {
 	
+	private static final String SUCCESS_MESSAGE = "successMessage";
 	private static List<Person> persons;
 	static {
 		Person p1 = new Person();
@@ -37,7 +40,7 @@ public class PersonController {
 		p2.setFirstname("John");
 		p2.setLastname("Wick");
 		
-		persons = List.of(p1, p2);
+		persons = new ArrayList<>(List.of(p1, p2));
 	}
 	
 	@Autowired
@@ -62,12 +65,14 @@ public class PersonController {
 	 * @return the name of the view used to edit that person.
 	 */
 	@GetMapping("/person/edit/{id}")
-	public String showEditPersonPage(@PathVariable("id") long id, Model model) {
-		Person personToEdit = persons.stream().filter(p -> id == p.getId()).findFirst().orElse(null);
+	public String showEditPersonPage(@PathVariable("id") long id, Model model) throws PersonNotFoundException {
+		Person personToEdit = persons.stream().filter(p -> id == p.getId())
+				.findFirst()
+				.orElseThrow(PersonNotFoundException::new);
 		model.addAttribute("person", personToEdit);
 		
 		String formAction = buildLocalUrl("/person/update/"+personToEdit.getId());
-		model.addAttribute("action", formAction.toString());
+		model.addAttribute("action", formAction);
 		return "personForm";
 	}
 	
@@ -82,12 +87,15 @@ public class PersonController {
 		// We don't get the id from the form so we populate id here.
 		personToUpdate.setId(id);
 		
-		persons = persons.stream().map(p -> p.getId() == id ? personToUpdate:p).collect(Collectors.toList());
+		List<Person> updatedPersonList = persons.stream().map(p -> p.getId() == id ? personToUpdate:p).collect(Collectors.toList());
+		
+		persons.clear();
+		persons.addAll(updatedPersonList);
 		
 		String message = String.format("Bravo ! : %s %s as been successfully MODIFIED !", 
 				personToUpdate.getFirstname(), 
 				personToUpdate.getLastname());
-		redirAttrs.addFlashAttribute("successMessage", message);
+		redirAttrs.addFlashAttribute(SUCCESS_MESSAGE, message);
 		return "redirect:/persons";
 	}
 	
@@ -119,13 +127,12 @@ public class PersonController {
 	    long generatedId = 100 + (long) (Math.random() * (100_000_000 - 100));
 	    personToCreate.setId(generatedId);
 	    
-	    persons = new ArrayList<>(persons);
 	    persons.add(personToCreate);
 	    
 	    String message = String.format("Bravo ! : %s %s as been successfully CREATED !", 
 				personToCreate.getFirstname(), 
 				personToCreate.getLastname());
-		redirAttrs.addFlashAttribute("successMessage", message);
+		redirAttrs.addFlashAttribute(SUCCESS_MESSAGE, message);
 	    
 	    return "redirect:/persons";
 	}
@@ -144,12 +151,19 @@ public class PersonController {
 			String message = String.format("Bravo ! : %s %s as been successfully DELETED !", 
 					personToDelete.getFirstname(), 
 					personToDelete.getLastname());
-			redirAttrs.addFlashAttribute("successMessage", message);
+			redirAttrs.addFlashAttribute(SUCCESS_MESSAGE, message);
 		}
 		
 		return "redirect:/persons";
 		
 	}
+	
+	@ExceptionHandler(PersonNotFoundException.class)
+    public String handlePersonNotFound(PersonNotFoundException exception, RedirectAttributes redirAttrs) {
+		String message = "Erreur : La personne n'as pas été trouvée";
+		redirAttrs.addFlashAttribute("errorMessage", message);
+        return "redirect:/persons";
+    }
 	
 	private String buildLocalUrl(String path) {
 		return ServletUriComponentsBuilder
