@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.demo.person.Person;
 
@@ -36,12 +40,15 @@ public class PersonController {
 		persons = List.of(p1, p2);
 	}
 	
+	@Autowired
+	private HttpServletRequest request;
+	
 	/**
 	 * Load all the persons and show the persons view.
 	 * @param model The model passed to the page.  This model will contain the list of "persons".
 	 * @return
 	 */
-	@GetMapping({"/", "/persons"})
+	@GetMapping("/persons")
 	public String showPersonsPage(Model model) {
 		model.addAttribute("persons", persons);
 		return "listPersons";
@@ -58,7 +65,10 @@ public class PersonController {
 	public String showEditPersonPage(@PathVariable("id") long id, Model model) {
 		Person personToEdit = persons.stream().filter(p -> id == p.getId()).findFirst().orElse(null);
 		model.addAttribute("person", personToEdit);
-		return "editPerson";
+		
+		String formAction = buildLocalUrl("/person/update/"+personToEdit.getId());
+		model.addAttribute("action", formAction.toString());
+		return "personForm";
 	}
 	
 	/**
@@ -87,11 +97,17 @@ public class PersonController {
 	 * @return the page containing the form used to create a new person.
 	 */
 	@GetMapping("/person/addNew")
-	public String showAddNewPaersonPage(Model model) {
-		model.addAttribute("person", new Person());
-		return "addNewPerson";
+	public String showAddNewPersonPage(Model model) {
+		Person newPerson = new Person();
+		model.addAttribute("person", newPerson);
+		
+		String formAction = buildLocalUrl("/person/create");
+		model.addAttribute("action", formAction);
+		
+		
+		return "personForm";
 	}
-	
+
 	/**
 	 * Create the specified person, generating it's id, and return to the "persons" page.
 	 * @param personToCreate The new person.  Should not contain an id.
@@ -133,6 +149,14 @@ public class PersonController {
 		
 		return "redirect:/persons";
 		
+	}
+	
+	private String buildLocalUrl(String path) {
+		return ServletUriComponentsBuilder
+                .fromContextPath(request)
+                .path(path)
+                .build()
+                .toString();
 	}
 	
 }

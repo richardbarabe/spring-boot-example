@@ -14,7 +14,7 @@
 
 <body>
 	<div class="center">
-		<form action="#" th:action="@{/person/update/{id}(id=${person.id})}" th:object="${person}" method="post">
+		<form action="#" th:action="${action}" th:object="${person}" method="post">
 		    <div>
 			    <label for="firstname">First Name</label>
 			    <input type="text" th:field="*{firstname}" id="firstname" placeholder="first name">
@@ -25,7 +25,7 @@
 			    <input type="text" th:field="*{lastname}" id="lastname" placeholder="last name">
 			    <span th:if="${#fields.hasErrors('lastname')}" th:errors="*{lastname}"></span>
 		    </div>
-		    <input type="submit" value="Update Person">   
+		    <div><input type="submit" value="Ok"></div>  
 		</form>
 	</div>
 </body>
