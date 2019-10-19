@@ -1,8 +1,6 @@
 package com.example.demo.person.web;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -18,6 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.demo.person.Person;
 import com.example.demo.person.PersonNotFoundException;
+import com.example.demo.person.PersonRepository;
 
 /**
  * Controls pages related to persons, including showing a list, editing, adding and deleting persons.
@@ -28,23 +27,12 @@ import com.example.demo.person.PersonNotFoundException;
 public class PersonController {
 	
 	private static final String SUCCESS_MESSAGE = "successMessage";
-	private static List<Person> persons;
-	static {
-		Person p1 = new Person();
-		p1.setId(1);
-		p1.setFirstname("Chuck");
-		p1.setLastname("Norris");
-		
-		Person p2 = new Person();
-		p2.setId(2);
-		p2.setFirstname("John");
-		p2.setLastname("Wick");
-		
-		persons = new ArrayList<>(List.of(p1, p2));
-	}
 	
 	@Autowired
 	private HttpServletRequest request;
+	
+	@Autowired
+	private PersonRepository personRepo;
 	
 	/**
 	 * Load all the persons and show the persons view.
@@ -53,9 +41,9 @@ public class PersonController {
 	 */
 	@GetMapping("/persons")
 	public String showPersonsPage(Model model) {
+		List<Person> persons = personRepo.findAll();
 		model.addAttribute("persons", persons);
 		return "listPersons";
-		
 	}
 	
 	/**
@@ -66,9 +54,7 @@ public class PersonController {
 	 */
 	@GetMapping("/person/edit/{id}")
 	public String showEditPersonPage(@PathVariable("id") long id, Model model) throws PersonNotFoundException {
-		Person personToEdit = persons.stream().filter(p -> id == p.getId())
-				.findFirst()
-				.orElseThrow(PersonNotFoundException::new);
+		Person personToEdit = personRepo.findById(id).orElseThrow(PersonNotFoundException::new);
 		model.addAttribute("person", personToEdit);
 		
 		String formAction = buildLocalUrl("/person/update/"+personToEdit.getId());
@@ -83,14 +69,11 @@ public class PersonController {
 	 * @return
 	 */
 	@PostMapping("/person/update/{id}")
-	public String updatePerson(@PathVariable("id") long id, Person personToUpdate, RedirectAttributes redirAttrs) {
+	public String updatePerson(@PathVariable("id") long id, Person personToUpdate, RedirectAttributes redirAttrs) throws PersonNotFoundException {
 		// We don't get the id from the form so we populate id here.
 		personToUpdate.setId(id);
 		
-		List<Person> updatedPersonList = persons.stream().map(p -> p.getId() == id ? personToUpdate:p).collect(Collectors.toList());
-		
-		persons.clear();
-		persons.addAll(updatedPersonList);
+		personRepo.update(personToUpdate);
 		
 		String message = String.format("Bravo ! : %s %s as been successfully MODIFIED !", 
 				personToUpdate.getFirstname(), 
@@ -123,11 +106,7 @@ public class PersonController {
 	 */
 	@PostMapping("/person/create")
 	public String createPerson(Person personToCreate, RedirectAttributes redirAttrs) {
-		// Random number between 100 and 100 000 000
-	    long generatedId = 100 + (long) (Math.random() * (100_000_000 - 100));
-	    personToCreate.setId(generatedId);
-	    
-	    persons.add(personToCreate);
+		personRepo.create(personToCreate);
 	    
 	    String message = String.format("Bravo ! : %s %s as been successfully CREATED !", 
 				personToCreate.getFirstname(), 
@@ -144,10 +123,10 @@ public class PersonController {
 	 */
 	@GetMapping("/person/delete/{id}")
 	public String deletePerson(@PathVariable("id") long id, RedirectAttributes redirAttrs) {
-		Person personToDelete = persons.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-		persons = persons.stream().filter(p -> p.getId() != id).collect(Collectors.toList());
+		Person personToDelete = personRepo.findById(id).orElse(null);
 		
 		if(personToDelete != null) {
+			personRepo.delete(id);
 			String message = String.format("Bravo ! : %s %s as been successfully DELETED !", 
 					personToDelete.getFirstname(), 
 					personToDelete.getLastname());
